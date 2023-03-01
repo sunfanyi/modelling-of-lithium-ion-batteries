@@ -1,6 +1,10 @@
 # modelling-of-lithium-ion-batteries
 Imperial College London Mech Eng - Future Clean Transport Technology Project 3
 
+## First Order ECN Model
+
+Model has been built. They shoule be easily accessible throughout the project. Check the function first_order_ECN() in [tools.py](tools.py) and the example at the last part of [part_2a.ipynb](part_2a.ipynb) for how to use it.
+
 ## Some Github Tips
 
 For people feeling uncomfortable with Google Colab and don't have VS Code. This is for Windows only but for Mac it should be similar.

@@ -13,3 +13,11 @@ def match_val(target, x, y):
     res = y[idx]
 
     return res
+
+
+def update_SOC(i, z, t, I, eta, Q):
+    """
+    Run this function in a loop, update the state of charge
+    """
+    z[i+1] = z[i] - 100 * I[i]*eta*(t[i+1]-t[i]) / (Q/1000*3600)  # *100 to convert to %
+

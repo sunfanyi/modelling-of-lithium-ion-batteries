@@ -99,8 +99,7 @@ def first_order_ECN(t, I, T, V_actual, ref_OCV, ref_SOC,
     return V_pred
 
 
-
-def first_order_ECN_temp(t, I, T, V_actual, ref_OCV, ref_SOC,
+def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
                     fit_R0_temp, fit_R1_temp, fit_C1_temp, T_change):
     """
     The first order ECN model for part 2. t is time and T is temperature.
@@ -119,20 +118,22 @@ def first_order_ECN_temp(t, I, T, V_actual, ref_OCV, ref_SOC,
     V_pred = np.ndarray([N, 1])
     OCV = np.ndarray([N, 1])
     I_R1 = np.ndarray([N, 1])
-    if T is None:
-        # redundant array, to prevent error when calling T[i]
-        T = np.ndarray([N, 1])
+    # if T is None:
+    #     # redundant array, to prevent error when calling T[i]
+    #     T = np.ndarray([N, 1])
 
 
     z0 = match_val(V_actual[0], ref_OCV, ref_SOC)
     z[0] = z0
     I_R1[0] = 0
 
+    T_new = T_init      # Initial Cell Temperature
 
     for i in range(N):
-        R1_val = fit_R1_temp(T[i])  # use values at i
-        R0_val = fit_R0_temp(I[i], T[i])
-        T_new = T_change(I[i], R0_val, R1_val, dt, T, T_env)
+        dt = t[i] - t[i+1]          # Time step
+        R1_val = fit_R1_temp(T_new)  # use values at i
+        R0_val = fit_R0_temp(I[i], T_new)
+        T_new = T_change(I[i], R0_val, R1_val, dt, T_new)
 
         OCV[i] = match_val(z[i], ref_SOC, ref_OCV)
         V_pred[i] = OCV[i] - R1_val * I_R1[i] - R0_val * I[i]

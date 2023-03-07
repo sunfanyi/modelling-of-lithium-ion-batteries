@@ -225,8 +225,8 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
     T_new = T_init      # Initial Cell Temperature
 
     for i in range(N):
-        # dt = t[i+1] - t[i]          # Time step
-        dt = 1
+        dt = t[i+1] - t[i]          # Time step
+        # dt = 1
         R0_val = fit_R0_temp(T_new)  # use values at i
         R1_val = fit_R1_temp(I[i], T_new)
         T_new = T_change(I[i], R0_val, R1_val, dt, T_new)

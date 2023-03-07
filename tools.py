@@ -35,6 +35,26 @@ def update_I_R1(i, I_R1, t, I, R1, C1):
                 1/a * (np.exp(a*dt)-1) * b * I[i]
 
 
+def select_pulse(t, I, V_actual, idx_pulse_start, idx_Vss,
+                 SOC, pulse, pad_zero=True):
+    """
+    Extract one pulse from the whole graph
+    """
+    if pad_zero:
+        # pad with some constant values both sides for visualisation
+        idx_seg_start = idx_pulse_start[SOC-1, pulse-1] - 200
+        idx_seg_end = idx_Vss[SOC-1, pulse-1] + 200
+    else:
+        idx_seg_start = idx_pulse_start[SOC-1, pulse-1]
+        idx_seg_end = idx_Vss[SOC-1, pulse-1]
+
+    t_seg = t[idx_seg_start : idx_seg_end+1]
+    V_actual_seg = V_actual[idx_seg_start : idx_seg_end+1]
+    I_seg = I[idx_seg_start : idx_seg_end+1]
+
+    return t_seg, I_seg, V_actual_seg
+
+
 def first_order_ECN(t, I, T, V_actual, ref_OCV, ref_SOC,
                     fit_R0, fit_R1, fit_C1):
     """

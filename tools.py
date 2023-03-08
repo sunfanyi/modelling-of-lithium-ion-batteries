@@ -73,15 +73,18 @@ def plot_pulses(t, I, V, idx_start, idx_end,
 
     SOC_level = SOC_from_idx_map[SOC - 1]
     if pulse == 'all':
-        xlim = [t[idx_start[SOC - 1, 0] - 1000],
-                t[idx_end[SOC - 1, -1] + 4000]]
+        # for extrapolating:
+        density = idx_end[SOC - 1, -1] - idx_start[SOC - 1, 0]
+        xlim = [t[idx_start[SOC - 1, 0] - int(0.01*density)],
+                t[idx_end[SOC - 1, -1] + int(0.15*density)]]
         ylim = [np.min(V[idx_start[SOC - 1, 0]:idx_end[SOC - 1, -1]]) - 0.05,
                 np.max(V[idx_start[SOC - 1, 0]:idx_end[SOC - 1, -1]]) + 0.05]
         title = 'Temperature = {}\nSOC = {:0.0f}%'.format(
             temp_level, SOC_level*100)
     else:
-        xlim = [t[idx_start[SOC - 1, pulse - 1] - 200],
-                t[idx_end[SOC - 1, pulse - 1] + 5000]]
+        density = idx_end[SOC - 1, pulse - 1] - idx_start[SOC - 1, pulse - 1]
+        xlim = [t[idx_start[SOC - 1, pulse - 1] - density],
+                t[idx_end[SOC - 1, pulse - 1] + 8*density]]
         ylim = [np.min(V[idx_start[SOC - 1, pulse - 1]:
                          idx_end[SOC - 1, pulse - 1]]) - 0.05,
                 np.max(V[idx_start[SOC - 1, pulse - 1]:
@@ -129,6 +132,102 @@ def plot_pulses(t, I, V, idx_start, idx_end,
 
     fig.suptitle(title)
     plt.show()
+
+
+def find_Vss_pos(t, V, idx_pulse_start, idx_pulse_end,
+                 threshold=500, for_bump=False):
+    """
+    For part 2 only.
+    Arrays can be for a single temperature (for part 2a) or three temperatures.
+    Find the index where the steady state is reached for each pulse.
+    :param t: time, [N] or [3 x N]
+    :param V: voltage, [N] or [3 x N]
+    :param idx_pulse_start: idx of current pulse starts, [8 x 8] or [3 x 8 x 8]
+    :param idx_pulse_end: idx of current pulse starts, [8 x 8] or [3 x 8 x8]
+    :param threshold: criteria for judging the steady state: the steady state is
+        reached if 'threshold' of constant values are observed
+    :param for_bump: if true: used for the small bump before each 8 pulses only
+    :return:
+    """
+    if len(t.shape) == 1:  # expand one dimension representing temperature
+        t = np.expand_dims(t, 0)
+        V = np.expand_dims(V, 0)
+        idx_pulse_start = np.expand_dims(idx_pulse_start, 0)
+        idx_pulse_end = np.expand_dims(idx_pulse_end, 0)
+
+    num_temp = V.shape[0]
+    idx_Vss = []
+    for j in range(num_temp):
+        # for each temperature value:
+        idx_each_temp = []
+        all_ends = idx_pulse_end[j].flatten()
+        for pos in range(len(all_ends)):
+            i = 0
+            while True:
+                segment = V[j, all_ends[pos] + i: all_ends[pos] + i + threshold]
+                if np.all(segment == segment[0]):
+                    # all element in this array are the same
+                    idx_each_temp.append(all_ends[pos] + i)
+                    break
+                i += 1
+
+                # Stop browsing if touching the next next pulse, or the end
+                i_limit = np.concatenate(
+                    (idx_pulse_start[j].flatten()[1:], [t.shape[1]]))
+                if i > i_limit[pos]:
+                    which_SOC = pos // 8
+                    SOC_level = SOC_from_idx_map[which_SOC]
+                    msg = "Position of V_ss is not found for the {}th pulse at SOC = {:0.0f}%".format(
+                        pos % 8, SOC_level * 100)
+                    raise ValueError(msg)
+
+        if for_bump:  # return 8 values for each temperature
+            idx_Vss.append(idx_each_temp)
+        else:  # return 64 values for each temperature
+            idx_Vss.append(np.reshape(idx_each_temp, [8, 8]))
+
+    return np.array(idx_Vss)
+
+
+def para_RC(t, I, V, idx_pulse_end, idx_Vss):
+    """
+    Used for part 2.
+    Parametrisation for R0, R1 and C1, as training data.
+    """
+    if len(t.shape) == 1:  # only for one temperature
+        d_V0 = np.abs(V[idx_pulse_end] - V_peaks)
+        d_I = np.abs(I[idx_pulse_end] - I_peaks)
+        R0_tab = d_V0 / d_I
+
+        d_Vinf = np.abs(V[idx_Vss] - V_peaks)
+        R1_tab = d_Vinf / d_I - R0_tab
+
+        C1_tab = np.abs((t[idx_Vss] - t[idx_pulse_end]) / (4 * R1_tab))
+
+    else:  # for multiple (e.g., 3) temperatures
+        def index_3D(array, idx):
+            res = [np.reshape(array[i][idx.reshape(3, -1)[i]], [8, 8]) for i in
+                   range(3)]
+            return np.array(res)
+
+        V_peaks = index_3D(V, idx_pulse_end - 1)
+        I_peaks = index_3D(I, idx_pulse_end - 1)
+
+        V_pulse_end = index_3D(V, idx_pulse_end)
+        d_V0 = np.abs(V_pulse_end - V_peaks)
+        I_pulse_end = index_3D(I, idx_pulse_end)
+        d_I = np.abs(I_pulse_end - I_peaks)
+        R0_tab = d_V0 / d_I
+
+        V_Vss = index_3D(V, idx_Vss)
+        d_Vinf = np.abs(V_Vss - V_peaks)
+        R1_tab = d_Vinf / d_I - R0_tab
+
+        t_Vss = index_3D(t, idx_Vss)
+        t_pulse_end = index_3D(t, idx_pulse_end)
+        C1_tab = np.abs((t_Vss - t_pulse_end) / (4 * R1_tab))
+
+    return R0_tab, R1_tab, C1_tab, I_peaks, d_I, d_Vinf
 
 
 def update_SOC(i, z, t, I, eta, Q):
@@ -243,4 +342,3 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
 
             update_I_R1(i, I_R1, t, I, R1_val, C1_val)  # update I_R1 at i+1
     return V_pred
-

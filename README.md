@@ -1,6 +1,17 @@
 # modelling-of-lithium-ion-batteries
 Imperial College London Mech Eng - Future Clean Transport Technology Project 3
 
+## Fitted Functions for R0, R1 and C1 (updating continuously)
+
+### Equation 1: First Order Gaussian Function for R1 (part 2a)
+
+$R_1 = R_1^{0A}exp(-\frac{(I-b)^2}{c}) + d$
+
+- $R_1^{0A} = 0.15367552527467995$
+- $b = -0.04587784742063004$
+- $c = 0.39148540607499516 $
+- $d = 0.008659593412853566$
+
 ## First Order ECN Model
 
 Model has been built. They shoule be easily accessible throughout the project. Check the function first_order_ECN() in [tools.py](tools.py) and the example at the last part of [part_2a.ipynb](part_2a.ipynb) for how to use it.

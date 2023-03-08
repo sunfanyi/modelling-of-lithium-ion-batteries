@@ -195,6 +195,9 @@ def para_RC(t, I, V, idx_pulse_end, idx_Vss):
     Parametrisation for R0, R1 and C1, as training data.
     """
     if len(t.shape) == 1:  # only for one temperature
+        V_peaks = V[idx_pulse_end - 1]
+        I_peaks = I[idx_pulse_end - 1]
+
         d_V0 = np.abs(V[idx_pulse_end] - V_peaks)
         d_I = np.abs(I[idx_pulse_end] - I_peaks)
         R0_tab = d_V0 / d_I

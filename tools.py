@@ -262,7 +262,7 @@ def para_RC(t, I, V, idx_pulse_end, idx_Vss):
     return R0_tab, R1_tab, C1_tab, I_peaks, d_I, d_Vinf
 
 
-def fit_RC(x, y_true, func, p0):
+def fit_RC(x, y_true, func, p0=None):
     """
     For part 2
     Now only usable for one indepenent variable

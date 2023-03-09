@@ -3,7 +3,7 @@ Imperial College London Mech Eng - Future Clean Transport Technology Project 3
 
 ## Fitted Functions for R0, R1 and C1 (updating continuously)
 
-### Equation 1: First Order Gaussian Function for R1 (part 2a)
+### Equation 1: First Order Gaussian Function for $R_1 = f(I)$ (not used)
 
 $R_1 = R_1^{0A}exp(-\frac{(I-b)^2}{c}) + d$
 
@@ -11,9 +11,9 @@ Fitted parameters:
 - $R_1^{0A} = 0.07292541736130936$
 - $b = 0.6251023663197635$
 - $c = 1.1847105636748154$
-- $d = 0.008692725707500853
+- $d = 0.008692725707500853$
 
-### Equation 2: Arrhenius Equation for R0 (part 2b)
+### Equation 2: Arrhenius Equation for $R_0 = f(T)$ (changed 09/03/23)
 
 $R_0 = R_0^{T0}exp(-\frac{E}{R}(\frac{1}{T} - \frac{1}{T_0}))$
 
@@ -26,6 +26,28 @@ Fitted parameters:
 Constants:
 - $R = 8.314$
 - $T_0 = 293.15$
+
+### Equation 3: Arrhenius Equation for $R_1 = f(T)$ (not used)
+
+$R_1 = R_1^{T0}exp(-\frac{E}{R}(\frac{1}{T} - \frac{1}{T_0}))$
+
+Fitted parameters:
+- $R_1^{T0} = 0.011824210015710747$
+- $E = -16183.500296082062$
+
+### Equation 4: Combined Equation for $R_1 = f(I, T)$ (changed 09/03/23)
+
+$R_1 = R_1^{0A,20^oC}exp(-\frac{(I-b)^2}{c})exp(-\frac{E}{R}(\frac{1}{T}-\frac{1}{T_0})) + d_1exp(-(T)/d_2) + d_3$
+
+Fitted parameters:
+- $R_1^{0A,20^oC} = 0.06381993272009605$
+- $b = 0.4983572952818651$
+- $c = 0.7350836807623884$
+- $E = -16183.500296082062$
+- $d_1 = 0.014710912236819855$
+- $d_2 = 37.50311325207411$
+- $d_3 = 0.00132155691380467$
+
 
 ## First Order ECN Model
 

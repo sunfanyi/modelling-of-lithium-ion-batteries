@@ -1,7 +1,11 @@
 # modelling-of-lithium-ion-batteries
 Imperial College London Mech Eng - Future Clean Transport Technology Project 3
 
-## Fitted Functions for R0, R1 and C1 (updating continuously)
+## Fitted Functions for R0, R1 and C1 (keep updating)
+
+### Constant value:
+
+$C_1 = 197.27991163742004$
 
 ### Equation 1: First Order Gaussian Function for $R_1 = f(I)$ (not used)
 
@@ -37,7 +41,7 @@ Fitted parameters:
 
 ### Equation 4: Combined Equation for $R_1 = f(I, T)$ (changed 09/03/23)
 
-$R_1 = R_1^{0A,20^oC}exp(-\frac{(I-b)^2}{c})exp(-\frac{E}{R}(\frac{1}{T}-\frac{1}{T_0})) + d_1exp(-(T)/d_2) + d_3$
+$R_1 = R_1^{0A,20^oC}exp(-\frac{(I-b)^2}{c})exp(-\frac{E}{R}(\frac{1}{T}-\frac{1}{T_0})) + d_1exp(-T/d_2) + d_3$
 
 Fitted parameters:
 - $R_1^{0A,20^oC} = 0.06381993272009605$

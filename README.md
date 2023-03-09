@@ -8,14 +8,15 @@ Imperial College London Mech Eng - Future Clean Transport Technology Project 3
 $R_1 = R_1^{0A}exp(-\frac{(I-b)^2}{c}) + d$
 
 Fitted parameters:
-- $R_1^{0A} = 0.15367552527467995$
-- $b = -0.04587784742063004$
-- $c = 0.39148540607499516 $
-- $d = 0.008659593412853566$
+- $R_1^{0A} = 0.07292541736130936$
+- $b = 0.6251023663197635$
+- $c = 1.1847105636748154$
+- $d = 0.008692725707500853
 
 ### Equation 2: Arrhenius Equation for R0 (part 2b)
 
 $R_0 = R_0^{T0}exp(-\frac{E}{R}(\frac{1}{T} - \frac{1}{T_0}))$
+
 where $T$ and $T_0$ are in $K$!!!
 
 Fitted parameters:

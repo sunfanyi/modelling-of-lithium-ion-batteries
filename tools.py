@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
 
 SOC_levels = np.arange(0.9, 0.1, -0.1)
 SOC_from_idx_map = {i: SOC_levels[i] for i in range(8)}  # 8 SOC levels
@@ -75,16 +76,24 @@ def plot_pulses(t, I, V, idx_start, idx_end,
     if pulse == 'all':
         # for extrapolating:
         density = idx_end[SOC - 1, -1] - idx_start[SOC - 1, 0]
-        xlim = [t[idx_start[SOC - 1, 0] - int(0.01*density)],
-                t[idx_end[SOC - 1, -1] + int(0.15*density)]]
+        xmin = t[idx_start[SOC - 1, 0] - int(0.01*density)]
+        if idx_Vss is None:
+            xmax = t[idx_end[SOC - 1, -1] + int(0.15*density)]
+        else:
+            xmax = t[idx_Vss[SOC - 1, -1] + int(0.05*density)]
+        xlim = [xmin, xmax]
         ylim = [np.min(V[idx_start[SOC - 1, 0]:idx_end[SOC - 1, -1]]) - 0.05,
                 np.max(V[idx_start[SOC - 1, 0]:idx_end[SOC - 1, -1]]) + 0.05]
         title = 'Temperature = {}\nSOC = {:0.0f}%'.format(
             temp_level, SOC_level*100)
     else:
         density = idx_end[SOC - 1, pulse - 1] - idx_start[SOC - 1, pulse - 1]
-        xlim = [t[idx_start[SOC - 1, pulse - 1] - density],
-                t[idx_end[SOC - 1, pulse - 1] + 8*density]]
+        xmin = t[idx_start[SOC - 1, pulse - 1] - density]
+        if idx_Vss is None:
+            xmax = t[idx_end[SOC - 1, pulse - 1] + 8*density]
+        else:
+            xmax = t[idx_Vss[SOC - 1, pulse - 1] + 2*density]
+        xlim = [xmin, xmax]
         ylim = [np.min(V[idx_start[SOC - 1, pulse - 1]:
                          idx_end[SOC - 1, pulse - 1]]) - 0.05,
                 np.max(V[idx_start[SOC - 1, pulse - 1]:
@@ -135,18 +144,18 @@ def plot_pulses(t, I, V, idx_start, idx_end,
 
 
 def find_Vss_pos(t, V, idx_pulse_start, idx_pulse_end,
-                 threshold=500, for_bump=False):
+                 for_bump=False, idx_for_bump=None):
     """
     For part 2 only.
     Arrays can be for a single temperature (for part 2a) or three temperatures.
     Find the index where the steady state is reached for each pulse.
+    The steady state is reached if 'threshold' of constant values are observed.
     :param t: time, [N] or [3 x N]
     :param V: voltage, [N] or [3 x N]
     :param idx_pulse_start: idx of current pulse starts, [8 x 8] or [3 x 8 x 8]
     :param idx_pulse_end: idx of current pulse starts, [8 x 8] or [3 x 8 x8]
-    :param threshold: criteria for judging the steady state: the steady state is
-        reached if 'threshold' of constant values are observed
     :param for_bump: if true: used for the small bump before each 8 pulses only
+    :param idx_for_bump: for bumps only, take the idx when the 8 pulses start
     :return:
     """
     if len(t.shape) == 1:  # expand one dimension representing temperature
@@ -154,33 +163,53 @@ def find_Vss_pos(t, V, idx_pulse_start, idx_pulse_end,
         V = np.expand_dims(V, 0)
         idx_pulse_start = np.expand_dims(idx_pulse_start, 0)
         idx_pulse_end = np.expand_dims(idx_pulse_end, 0)
+        if for_bump:
+            idx_for_bump = np.expand_dims(idx_for_bump, 0)
 
     num_temp = V.shape[0]
     idx_Vss = []
     for j in range(num_temp):
         # for each temperature value:
         idx_each_temp = []
+        all_starts = idx_pulse_start[j].flatten()
         all_ends = idx_pulse_end[j].flatten()
-        for pos in range(len(all_ends)):
-            i = 0
+        for pos in range(len(all_ends)):  # for each pulse
+            if for_bump:
+                density = idx_for_bump[j, pos, 0] - all_ends[pos]
+            else:
+                if (pos == len(all_ends) - 1) or (
+                        all_ends[pos] == all_ends[pos + 1]):
+                    density = len(t[j]) - all_ends[pos]
+                elif pos % 8 == 7:  # last pulse of each SOC
+                    # take the previous density
+                    pass
+                else:
+                    density = all_starts[pos + 1] - all_ends[pos]
+            if for_bump:
+                threshold = int(density / 5)
+            else:
+                threshold = int(density / 10)
+
+            i = all_ends[pos]
+            # Stop browsing if touching the next next pulse, or the end
+            if for_bump:
+                i_limit = idx_for_bump[j, :, 0]
+            else:
+                i_limit = np.concatenate((all_starts[1:], [t.shape[1]]))
+                # specifically for 0 degC where the last two pulses are padded with edge value:
+                i_limit[np.where(i_limit == i_limit[-2])[0][1:]] = i_limit[-1]
+
             while True:
-                segment = V[j, all_ends[pos] + i: all_ends[pos] + i + threshold]
+                segment = V[j, i: i + threshold]
                 if np.all(segment == segment[0]):
                     # all element in this array are the same
-                    idx_each_temp.append(all_ends[pos] + i)
+                    idx_each_temp.append(i)
                     break
                 i += 1
-
-                # Stop browsing if touching the next next pulse, or the end
-                i_limit = np.concatenate(
-                    (idx_pulse_start[j].flatten()[1:], [t.shape[1]]))
                 if i > i_limit[pos]:
-                    which_SOC = pos // 8
-                    SOC_level = SOC_from_idx_map[which_SOC]
-                    msg = "Position of V_ss is not found for the {}th pulse at SOC = {:0.0f}%".format(
-                        pos % 8, SOC_level * 100)
-                    raise ValueError(msg)
-
+                    # take the last value
+                    idx_each_temp.append(i - 1)
+                    break
         if for_bump:  # return 8 values for each temperature
             idx_Vss.append(idx_each_temp)
         else:  # return 64 values for each temperature
@@ -231,6 +260,18 @@ def para_RC(t, I, V, idx_pulse_end, idx_Vss):
         C1_tab = np.abs((t_Vss - t_pulse_end) / (4 * R1_tab))
 
     return R0_tab, R1_tab, C1_tab, I_peaks, d_I, d_Vinf
+
+
+def fit_RC(x, y_true, func, p0):
+    """
+    For part 2
+    Now only usable for one indepenent variable
+    """
+    popts, _ = curve_fit(func, x, y_true, p0)
+
+    x_plot = np.linspace(np.min(x), np.max(x), 500)
+    y_pred = func(x_plot, *popts)
+    return popts, x_plot, y_pred
 
 
 def update_SOC(i, z, t, I, eta, Q):

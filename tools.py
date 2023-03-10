@@ -338,6 +338,8 @@ def first_order_ECN(t, I, T, V_actual, ref_OCV, ref_SOC,
     return V_pred
 
 
+# Part 3: Thermal Model
+
 def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
                     fit_R0_temp, fit_R1_temp, fit_C1_temp, T_change):
     """
@@ -365,24 +367,27 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
     z[0] = z0
     I_R1[0] = 0
 
-    T_new = T_init      # Initial Cell Temperature
+    T[0] = T_init      # Initial Cell Temperature
 
-    for i in range(N):
+
+    for i in range(N-1):
         dt = t[i+1] - t[i]          # Time step
-        # dt = 1
-        R0_val = fit_R0_temp(T_new)  # use values at i
-        R1_val = fit_R1_temp(I[i], T_new)
-        T_new = T_change(I[i], R0_val, R1_val, dt, T_new)
+        
+        # use values at i
+        R0_val = fit_R0_temp(T[i])  
+        R1_val = fit_R1_temp(I[i], T[i])        # I or I_R1
 
         OCV[i] = match_val(z[i], ref_SOC, ref_OCV)
         V_pred[i] = OCV[i] - R1_val * I_R1[i] - R0_val * I[i]
 
         if i != N-1:
+            T[i+1] = T_change(I[i], I_R1[i], R0_val, R1_val, dt, T[i])
+
             update_SOC(i, z, t, I, eta, Q)  # update z at i+1
             # We are updating the next value (i+1):
             R0_val = fit_R0_temp(T[i+1])
-            R1_val = fit_R1_temp(I[i], T[i+1])  # use values at i+1
+            R1_val = fit_R1_temp(I[i+1], T[i+1])    # I or I_R1
             C1_val = fit_C1_temp(T[i+1])
 
             update_I_R1(i, I_R1, t, I, R1_val, C1_val)  # update I_R1 at i+1
-    return V_pred
+    return V_pred, T

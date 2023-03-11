@@ -1,3 +1,5 @@
+import os
+import json
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
@@ -188,7 +190,7 @@ def find_Vss_pos(t, V, idx_pulse_start, idx_pulse_end,
             if for_bump:
                 threshold = int(density / 5)
             else:
-                threshold = int(density / 10)
+                threshold = int(density / 12)
 
             i = all_ends[pos]
             # Stop browsing if touching the next next pulse, or the end
@@ -274,6 +276,16 @@ def fit_RC(x, y_true, func, p0=None):
     return popts, x_plot, y_pred
 
 
+def read_fit_res(res_dir, file):
+    file_path = os.path.join(res_dir, file + '.json')
+    info = json.load(open(file_path, 'r'))
+    paras = tuple(info.values())
+    try:
+        return paras[0] if len(paras) == 1 else paras
+    except ValueError:
+        raise Exception("Wrong number of outputs, check json files")
+
+
 def update_SOC(i, z, t, I, eta, Q):
     """
     Run this function in a loop, update the state of charge
@@ -295,7 +307,7 @@ def update_I_R1(i, I_R1, t, I, R1, C1):
 
 
 def first_order_ECN(t, I, T, V_actual, ref_OCV, ref_SOC,
-                    fit_R0, fit_R1, fit_C1):
+                    fit_R0, fit_R1, fit_C1, debug=False):
     """
     The first order ECN model for part 2. t is time and T is temperature.
     !!!!!
@@ -309,13 +321,13 @@ def first_order_ECN(t, I, T, V_actual, ref_OCV, ref_SOC,
     eta = 1
 
     N = len(t)
-    z = np.ndarray([N, 1])
-    V_pred = np.ndarray([N, 1])
-    OCV = np.ndarray([N, 1])
-    I_R1 = np.ndarray([N, 1])
+    z = np.ndarray((N,))
+    V_pred = np.ndarray((N,))
+    OCV = np.ndarray((N,))
+    I_R1 = np.ndarray((N,))
     if T is None:
         # redundant array, to prevent error when calling T[i]
-        T = np.ndarray([N, 1])
+        T = np.ndarray((N,))
 
     z0 = match_val(V_actual[0], ref_OCV, ref_SOC)
     z[0] = z0
@@ -336,7 +348,8 @@ def first_order_ECN(t, I, T, V_actual, ref_OCV, ref_SOC,
 
             update_I_R1(i, I_R1, t, I, R1_val, C1_val)  # update I_R1 at i+1
 
-        print(R1_val,' | ', I_R1[i],' | ',  R0_val,' | ', I[i])
+        if debug:
+            print(R1_val,' | ', I_R1[i],' | ',  R0_val,' | ', I[i])
     return V_pred
 
 
@@ -357,12 +370,12 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
     eta = 1
 
     N = len(t)
-    z = np.ndarray([N, 1])
-    V_pred = np.ndarray([N, 1])
-    OCV = np.ndarray([N, 1])
-    I_R1 = np.ndarray([N, 1])
+    z = np.ndarray((N,))
+    V_pred = np.ndarray((N,))
+    OCV = np.ndarray((N,))
+    I_R1 = np.ndarray((N,))
 
-    T = np.ndarray([N, 1])
+    T = np.ndarray((N,))
 
 
     z0 = match_val(V_actual[0], ref_OCV, ref_SOC)

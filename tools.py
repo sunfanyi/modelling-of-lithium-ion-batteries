@@ -371,7 +371,7 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
 
     N = len(t)
     z = np.ndarray((N,))
-    V_pred = np.ndarray((N,))
+    V_pred = np.ndarray((N-1,))
     OCV = np.ndarray((N,))
     I_R1 = np.ndarray((N,))
 
@@ -395,16 +395,16 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
         OCV[i] = match_val(z[i], ref_SOC, ref_OCV)
         V_pred[i] = OCV[i] - R1_val * I_R1[i] - R0_val * I[i]
 
-        if i != N-1:
-            T[i+1] = T_change(I[i], I_R1[i], R0_val, R1_val, dt, T[i])
+        # if i != N-1:
+        T[i+1] = T_change(I[i], I_R1[i], R0_val, R1_val, dt, T[i])
 
-            update_SOC(i, z, t, I, eta, Q)  # update z at i+1
-            # We are updating the next value (i+1):
-            R0_val = fit_R0_temp(T[i+1])
-            R1_val = fit_R1_temp(I[i+1], T[i+1])    # I or I_R1
-            C1_val = fit_C1_temp(T[i+1])
+        update_SOC(i, z, t, I, eta, Q)  # update z at i+1
+        # We are updating the next value (i+1):
+        R0_val = fit_R0_temp(T[i+1])
+        R1_val = fit_R1_temp(I[i+1], T[i+1])    # I or I_R1
+        C1_val = fit_C1_temp(T[i+1])
 
-            update_I_R1(i, I_R1, t, I, R1_val, C1_val)  # update I_R1 at i+1
+        update_I_R1(i, I_R1, t, I, R1_val, C1_val)  # update I_R1 at i+1
 
         print(R1_val,' | ', I_R1[i],' | ',  R0_val,' | ', I[i])
     return V_pred, T

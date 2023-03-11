@@ -335,6 +335,8 @@ def first_order_ECN(t, I, T, V_actual, ref_OCV, ref_SOC,
             C1_val = fit_C1(I[i+1], z[i+1], T[i+1])
 
             update_I_R1(i, I_R1, t, I, R1_val, C1_val)  # update I_R1 at i+1
+
+        print(R1_val,' | ', I_R1[i],' | ',  R0_val,' | ', I[i])
     return V_pred
 
 
@@ -390,4 +392,6 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
             C1_val = fit_C1_temp(T[i+1])
 
             update_I_R1(i, I_R1, t, I, R1_val, C1_val)  # update I_R1 at i+1
+
+        print(R1_val,' | ', I_R1[i],' | ',  R0_val,' | ', I[i])
     return V_pred, T

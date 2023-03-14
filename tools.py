@@ -190,10 +190,10 @@ def find_Vss_pos(t, V, idx_pulse_start, idx_pulse_end,
             if for_bump:
                 threshold = int(density / 5)
             else:
-                threshold = int(density / 12)
+                threshold = int(density / 8)
 
             i = all_ends[pos]
-            # Stop browsing if touching the next next pulse, or the end
+            # Stop browsing if touching the next pulse, or the end
             if for_bump:
                 i_limit = idx_for_bump[j, :, 0]
             else:
@@ -216,7 +216,6 @@ def find_Vss_pos(t, V, idx_pulse_start, idx_pulse_end,
             idx_Vss.append(idx_each_temp)
         else:  # return 64 values for each temperature
             idx_Vss.append(np.reshape(idx_each_temp, [8, 8]))
-
     return np.array(idx_Vss)
 
 
@@ -331,25 +330,23 @@ def first_order_ECN(t, I, T, V_actual, ref_OCV, ref_SOC,
 
     z0 = match_val(V_actual[0], ref_OCV, ref_SOC)
     z[0] = z0
-    I_R1[0] = 0
+    I_R1[0] = I[0]
 
     for i in range(N):
-        R1_val = fit_R1(I[i], z[i], T[i])  # use values at i
+        C1_val = fit_C1(I_R1[i], z[i], T[i])
         R0_val = fit_R0(I[i], z[i], T[i])
+        R1_val = fit_R1(I_R1[i], z[i], T[i])  # use values at i
 
         OCV[i] = match_val(z[i], ref_SOC, ref_OCV)
         V_pred[i] = OCV[i] - R1_val * I_R1[i] - R0_val * I[i]
 
         if i != N-1:
             update_SOC(i, z, t, I, eta, Q)  # update z at i+1
-            # We are updating the next value (i+1):
-            R1_val = fit_R1(I[i+1], z[i+1], T[i+1])  # use values at i+1
-            C1_val = fit_C1(I[i+1], z[i+1], T[i+1])
-
             update_I_R1(i, I_R1, t, I, R1_val, C1_val)  # update I_R1 at i+1
 
         if debug:
-            print(R1_val,' | ', I_R1[i],' | ',  R0_val,' | ', I[i])
+            print('t:{}\tV_pred:{:.4f}\tOCV:{:.4f}\tz:{:.1f}\tR1_val:{:.4f}\tI_R1:{:.4f}\tR0_val:{:.4f}\tI:{:.4f}'.format(
+                  t[i], V_pred[i], OCV[i], z[i], R1_val, I_R1[i], R0_val, I[i]))
     return V_pred
 
 
@@ -387,9 +384,9 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
 
     for i in range(N-1):
         dt = t[i+1] - t[i]          # Time step
-        
+
         # use values at i
-        R0_val = fit_R0_temp(T[i])  
+        R0_val = fit_R0_temp(T[i])
         R1_val = fit_R1_temp(I[i], T[i])        # I or I_R1
 
         OCV[i] = match_val(z[i], ref_SOC, ref_OCV)

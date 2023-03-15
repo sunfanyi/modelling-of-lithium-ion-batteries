@@ -387,7 +387,8 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
 
         # use values at i
         R0_val = fit_R0_temp(T[i])
-        R1_val = fit_R1_temp(I[i], T[i])        # I or I_R1
+        R1_val = fit_R1_temp(I_R1[i], T[i])        # I or I_R1
+        C1_val = fit_C1_temp(T[i])
 
         OCV[i] = match_val(z[i], ref_SOC, ref_OCV)
         V_pred[i] = OCV[i] - R1_val * I_R1[i] - R0_val * I[i]
@@ -397,9 +398,9 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
 
         update_SOC(i, z, t, I, eta, Q)  # update z at i+1
         # We are updating the next value (i+1):
-        R0_val = fit_R0_temp(T[i+1])
-        R1_val = fit_R1_temp(I[i+1], T[i+1])    # I or I_R1
-        C1_val = fit_C1_temp(T[i+1])
+        # R0_val = fit_R0_temp(T[i+1])
+        # R1_val = fit_R1_temp(I_R1[i+1], T[i+1])    # I or I_R1
+        # C1_val = fit_C1_temp(T[i+1])
 
         update_I_R1(i, I_R1, t, I, R1_val, C1_val)  # update I_R1 at i+1
 

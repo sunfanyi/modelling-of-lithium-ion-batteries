@@ -406,3 +406,4 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
 
         print(R1_val,' | ', I_R1[i],' | ',  R0_val,' | ', I[i])
     return V_pred, T
+

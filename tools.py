@@ -353,7 +353,7 @@ def first_order_ECN(t, I, T, V_actual, ref_OCV, ref_SOC,
 # Part 3: Thermal Model
 
 def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
-                    fit_R0_temp, fit_R1_temp, fit_C1_temp, T_change):
+                    fit_R0_temp, fit_R1_temp, fit_C1_temp, T_change, h):
     """
     The first order ECN model for part 2. t is time and T is temperature.
     !!!!!
@@ -394,7 +394,7 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
         V_pred[i] = OCV[i] - R1_val * I_R1[i] - R0_val * I[i]
 
         # if i != N-1:
-        T[i+1] = T_change(I[i], I_R1[i], R0_val, R1_val, dt, T[i])
+        T[i+1] = T_change(I[i], I_R1[i], R0_val, R1_val, dt, T[i], h)
 
         update_SOC(i, z, t, I, eta, Q)  # update z at i+1
         # We are updating the next value (i+1):
@@ -404,6 +404,6 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
 
         update_I_R1(i, I_R1, t, I, R1_val, C1_val)  # update I_R1 at i+1
 
-        print(R1_val,' | ', I_R1[i],' | ',  R0_val,' | ', I[i])
+        # print(R1_val,' | ', I_R1[i],' | ',  R0_val,' | ', I[i])
     return V_pred, T
 

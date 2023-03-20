@@ -44,7 +44,7 @@ def select_pulse(t, I, V_actual, idx_pulse_start, idx_Vss,
 
 
 def plot_pulses(t, I, V, idx_start, idx_end,
-                SOC, pulse, idx_Vss=None, show_current=True, temperature=None):
+                SOC, pulse, idx_Vss=None, show_current=True, temperature=None, show_title=True):
     """
     For part 2 only.
     Used for plotting the training data only (8 SOC levels x 8 currents).
@@ -113,12 +113,13 @@ def plot_pulses(t, I, V, idx_start, idx_end,
     # plot voltage
     ax1.plot(t, V)
     ax1.scatter(t[idx_start], V[idx_start],
-                c='r', s=20, marker='x', label='Pulse start/end')
+                c='r', s=20, marker='x', label='Pulse start/end', linewidth=1.2)
     ax1.scatter(t[idx_end], V[idx_end],
                 c='r', s=20, marker='x')
     if idx_Vss is not None:
         ax1.scatter(t[idx_Vss], V[idx_Vss],
-                    c='g', s=20, marker='x', label='Steady State')
+                    c='g', s=20, marker='x', label='Steady State', linewidth=1.2)
+    ax1.grid()
     ax1.set_xlim(xlim)
     ax1.set_ylim(ylim)
     ax1.legend()
@@ -129,21 +130,23 @@ def plot_pulses(t, I, V, idx_start, idx_end,
     if show_current:
         ax2.plot(t, I)
         ax2.scatter(t[idx_start], I[idx_start],
-                    c='r', s=20, marker='x', label='Pulse start/end')
+                    c='r', s=20, marker='x', label='Pulse start/end', linewidth=1.2)
         ax2.scatter(t[idx_end], I[idx_end],
                     c='r', s=20, marker='x')
         if idx_Vss is not None:
             ax2.scatter(t[idx_Vss], I[idx_Vss],
-                        c='g', s=20, marker='x', label='Steady State')
+                        c='g', s=20, marker='x', label='Steady State', linewidth=1.2)
         ax2.set_xlim(xlim)
         # ax2.set_ylim(ylim)
+        ax2.grid()
         ax2.legend()
         ax2.set_xlabel('Time (s)')
         ax2.set_ylabel('Current (A)')
 
-    fig.suptitle(title)
+    if show_title:
+        fig.suptitle(title)
     plt.show()
-
+    return fig
 
 def find_Vss_pos(t, V, idx_pulse_start, idx_pulse_end,
                  for_bump=False, idx_for_bump=None):

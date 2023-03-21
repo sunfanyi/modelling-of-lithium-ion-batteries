@@ -313,7 +313,7 @@ def first_order_ECN(t, I, T, V_actual, ref_OCV, ref_SOC,
     """
     The first order ECN model for part 2. t is time and T is temperature.
     !!!!!
-    fit_R0, fit_R1, fit_C1 are placeholder functions for fitting R0, R1, C1.
+    fit_R0, fit_R1, fit_C1 are functions for fitting R0, R1, C1.
     They need to be defined before calling first_order_ECN().
     They need to be changed as the model updating.
     They are created to ensure first_order_ECN() can be used
@@ -355,15 +355,15 @@ def first_order_ECN(t, I, T, V_actual, ref_OCV, ref_SOC,
 
 # Part 3: Thermal Model
 
-def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
-                    fit_R0_temp, fit_R1_temp, fit_C1_temp, T_change, h):
+def first_order_ECN_thermal(t, I, T_init, V_actual, ref_OCV, ref_SOC,
+                         fit_R0_temp, fit_R1_temp, fit_C1_temp, T_change, h, debug=False):
     """
-    The first order ECN model for part 2. t is time and T is temperature.
+    The first order ECN thermal model for part 3.
     !!!!!
-    fit_R0, fit_R1, fit_C1 are placeholder functions for fitting R0, R1, C1.
-    They need to be defined before calling first_order_ECN().
+    fit_R0, fit_R1, fit_C1, T_change are functions for fitting R0, R1, C1.
+    They need to be defined before calling first_order_ECN_thermal().
     They need to be changed as the model updating.
-    They are created to ensure first_order_ECN() can be used
+    They are created to ensure first_order_ECN_thermal() can be used
         everywhere throughout this project.
     """
     Q = 2500
@@ -377,13 +377,11 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
 
     T = np.ndarray((N,))
 
-
     z0 = match_val(V_actual[0], ref_OCV, ref_SOC)
     z[0] = z0
     I_R1[0] = 0
 
     T[0] = T_init      # Initial Cell Temperature
-
 
     for i in range(N-1):
         dt = t[i+1] - t[i]          # Time step
@@ -396,17 +394,14 @@ def first_order_ECN_temp(t, I, T_init, V_actual, ref_OCV, ref_SOC,
         OCV[i] = match_val(z[i], ref_SOC, ref_OCV)
         V_pred[i] = OCV[i] - R1_val * I_R1[i] - R0_val * I[i]
 
-        # if i != N-1:
         T[i+1] = T_change(I[i], I_R1[i], R0_val, R1_val, dt, T[i], h)
 
         update_SOC(i, z, t, I, eta, Q)  # update z at i+1
-        # We are updating the next value (i+1):
-        # R0_val = fit_R0_temp(T[i+1])
-        # R1_val = fit_R1_temp(I_R1[i+1], T[i+1])    # I or I_R1
-        # C1_val = fit_C1_temp(T[i+1])
 
         update_I_R1(i, I_R1, t, I, R1_val, C1_val)  # update I_R1 at i+1
 
-        # print(R1_val,' | ', I_R1[i],' | ',  R0_val,' | ', I[i])
+        if debug:
+            print('t:{}\tV_pred:{:.4f}\tOCV:{:.4f}\tz:{:.1f}\tR1_val:{:.4f}\tI_R1:{:.4f}\tR0_val:{:.4f}\tI:{:.4f}'.format(
+                  t[i], V_pred[i], OCV[i], z[i], R1_val, I_R1[i], R0_val, I[i]))
     return V_pred, T
 
